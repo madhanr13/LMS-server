@@ -1,17 +1,17 @@
 import mongoose from "mongoose";
 
-const courseSchema = mongoose.Schema(
+const courseSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, "Title is required"],
+      required: [true, "Course title is required"],
       trim: true,
-      maxlength: [100, "Course title cannot exceed 100 characters"],
+      maxLength: [100, "Course title cannot exceed 100 characters"],
     },
     subtitle: {
       type: String,
       trim: true,
-      maxlength: [200, "Course subtitle cannot exceed 200 characters"],
+      maxLength: [200, "Course subtitle cannot exceed 200 characters"],
     },
     description: {
       type: String,
@@ -19,31 +19,25 @@ const courseSchema = mongoose.Schema(
     },
     category: {
       type: String,
-      required: [true, "Category is required"],
+      required: [true, "Course category is required"],
       trim: true,
-      enum: [
-        "Web Development",
-        "Mobile Development",
-        "Data Science",
-        "Business",
-      ],
     },
     level: {
       type: String,
       enum: {
         values: ["beginner", "intermediate", "advanced"],
-        message: "Please select a vaid course",
+        message: "Please select a valid course level",
       },
       default: "beginner",
     },
     price: {
       type: Number,
-      required: [true, "Price is required"],
-      min: [0, "Enter a valid price"],
+      required: [true, "Course price is required"],
+      min: [0, "Course price must be non-negative"],
     },
     thumbnail: {
       type: String,
-      required: [true, "Thumbnail is required"],
+      required: [true, "Course thumbnail is required"],
     },
     enrolledStudents: [
       {
@@ -82,16 +76,17 @@ const courseSchema = mongoose.Schema(
   }
 );
 
+// Virtual field for average rating (to be implemented with reviews)
 courseSchema.virtual("averageRating").get(function () {
-  return 0; // placeholder assignment
+  return 0; // Placeholder until review system is implemented
 });
 
-courseSchema.pre('save', function (next){
-    if(this.lectures){
-        this.totalLectures = this.lectures.length;
-    }
-    next()
-})
+// Update total lectures count when lectures are modified
+courseSchema.pre("save", function (next) {
+  if (this.lectures) {
+    this.totalLectures = this.lectures.length;
+  }
+  next();
+});
 
-const Course = mongoose.model("Course", courseSchema);
-export default Course;
+export const Course = mongoose.model("Course", courseSchema);

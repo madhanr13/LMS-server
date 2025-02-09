@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-import bcryptjs from "bcryptjs";
+import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { validateHeaderName } from "http";
 
 const userSchema = new mongoose.Schema(
   {
@@ -14,30 +13,31 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, "Email is required"],
-      trim: true,
       unique: true,
+      trim: true,
+      lowercase: true,
       match: [
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        "Please enter a valid email address",
+        /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
+        "Please provide a valid email",
       ],
     },
     password: {
       type: String,
       required: [true, "Password is required"],
-      minLength: [8, "Password must be atleast 8 characters"],
+      minLength: [8, "Password must be at least 8 characters"],
       select: false,
     },
     role: {
       type: String,
       enum: {
-        values: ["admin", "student", "instructor"],
-        message: "Please select a role",
+        values: ["student", "instructor", "admin"],
+        message: "Please select a valid role",
       },
       default: "student",
     },
     avatar: {
       type: String,
-      default: "default.png",
+      default: "default-avatar.png",
     },
     bio: {
       type: String,
@@ -45,7 +45,7 @@ const userSchema = new mongoose.Schema(
     },
     enrolledCourses: [
       {
-        courseId: {
+        course: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Course",
         },
@@ -55,12 +55,14 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
-    createdCourses: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Course",
-    },
+    createdCourses: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Course",
+      },
+    ],
     resetPasswordToken: String,
-    resetPasswordExpiry: Date,
+    resetPasswordExpire: Date,
     lastActive: {
       type: Date,
       default: Date.now,
@@ -72,42 +74,41 @@ const userSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
-//hash the password
 
+// Encrypt password before saving
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     return next();
   }
-  this.password = await bcryptjs.hash(this.password, 12);
+  this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 
-//compare password
-
-userSchema.methods.comparePassword = async function (enterPassword) {
-  return await bcryptjs.compare(enterPassword, this.password);
+// Compare password method
+userSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
-//generate reset password token
-userSchema.methods.generateResetPasswordToken = function () {
+// Generate password reset token
+userSchema.methods.getResetPasswordToken = function () {
   const resetToken = crypto.randomBytes(20).toString("hex");
   this.resetPasswordToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
-  this.resetPasswordExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
   return resetToken;
 };
 
-userSchema.methods.updateLastActive = function () {
-  this.lastActive = Date.now();
-  return this.lastActive({ validateBeforeSave: false });
-};
-
-//virtual field for enrolled courses
+// Virtual field for total enrolled courses
 userSchema.virtual("totalEnrolledCourses").get(function () {
-  return this.enrolledCourses.length;
+  return this.enrolledCourses?.length;
 });
 
-const User = mongoose.model("User", userSchema);
-export default User;
+// Update lastActive timestamp
+userSchema.methods.updateLastActive = function () {
+  this.lastActive = Date.now();
+  return this.save({ validateBeforeSave: false });
+};
+
+export const User = mongoose.model("User", userSchema);
