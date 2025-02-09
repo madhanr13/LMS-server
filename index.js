@@ -8,6 +8,9 @@ import hpp from "hpp";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
+//import routes
+import healthRoute from "./routes/health.routes.js";
+
 const app = express();
 dotenv.config();
 const PORT = process.env.PORT;
@@ -63,6 +66,8 @@ app.use(
 );
 
 /// API routes
+
+app.use("/health", healthRoute);
 
 //404 page
 app.use((req, res) => {
