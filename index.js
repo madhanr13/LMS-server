@@ -10,6 +10,7 @@ import cors from "cors";
 
 //import routes
 import healthRoute from "./routes/health.routes.js";
+import userRoute from "./routes/user.routes.js"
 
 const app = express();
 dotenv.config();
@@ -68,6 +69,7 @@ app.use(
 /// API routes
 
 app.use("/health", healthRoute);
+app.use("/api/v1/user", userRoute);
 
 //404 page
 app.use((req, res) => {

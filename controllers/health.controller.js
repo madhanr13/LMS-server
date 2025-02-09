@@ -1,4 +1,4 @@
-import { getDBStatus } from "../database/db";
+import { getDBStatus } from "../database/db.js";
 
 export const healthCheck = async (req, res) => {
   try {
