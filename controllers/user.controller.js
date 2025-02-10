@@ -1,5 +1,5 @@
 import { catchAsync, AppError } from "../middlewares/error.middleware.js";
-import User from "../models/user.model.js";
+import {User} from "../models/user.model.js";
 import generateToken from "../utils/generateToken.js";
 import {deleteMediaFromCloudinary, uploadMedia} from '../utils/cloudinary.js'
 
